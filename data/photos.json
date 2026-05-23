@@ -1,8 +1,122 @@
 [
   {
-    "id": 1,
-    "location": "City, Country",
-    "description": "Lets people through, blocks larger animals.",
-    "date": "2026-05-23"
+    "id": 2,
+    "date": "2020-09-21",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 3,
+    "date": "2020-09-22",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 4,
+    "date": "2020-09-22",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 5,
+    "date": "2020-09-22",
+    "latitude": 54.992945,
+    "longitude": -2.562984,
+    "location": "B6318, Thirlwall, Gilsland, Northumberland, North East, England, CA8 7EJ, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 6,
+    "date": "2020-09-22",
+    "latitude": 54.986655,
+    "longitude": -2.536766,
+    "location": "Greenhead, Northumberland, North East, England, CA8 7HL, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 7,
+    "date": "2020-09-22",
+    "latitude": 54.980162,
+    "longitude": -2.54827,
+    "location": "A69, Thirlwall, Greenhead, Northumberland, North East, England, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 8,
+    "date": "2020-09-22",
+    "latitude": 54.988445,
+    "longitude": -2.553956,
+    "location": "B6318, Thirlwall, Gilsland, Northumberland, North East, England, CA8 7EJ, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 9,
+    "date": "2020-09-22",
+    "latitude": 54.988519,
+    "longitude": -2.55409,
+    "location": "B6318, Thirlwall, Gilsland, Northumberland, North East, England, CA8 7EJ, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 10,
+    "date": "2020-09-23",
+    "latitude": 54.989469,
+    "longitude": -2.578519,
+    "location": "Upper Denton, Cumberland, England, CA8 7AE, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 11,
+    "date": "2020-09-23",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 12,
+    "date": "2020-09-23",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 13,
+    "date": "2020-09-23",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 14,
+    "date": "2020-11-07",
+    "latitude": 51.670818,
+    "longitude": 0.054766,
+    "location": "Epping New Road, Loughton, Epping Forest, Essex, England, CM16 5HP, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 15,
+    "date": "2021-08-12",
+    "latitude": 46.307534,
+    "longitude": 13.812125,
+    "location": "Planina Dedno polje, Bohinj, 4265, Slovenija",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 16,
+    "date": "2024-03-16",
+    "camera": "samsung SM-S901B",
+    "description": ""
+  },
+  {
+    "id": 17,
+    "date": "2024-08-26",
+    "camera": "samsung SM-S901B",
+    "description": ""
   }
 ]

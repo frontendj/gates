@@ -1,0 +1,18 @@
+{
+  "name": "gates",
+  "version": "1.0.0",
+  "description": "A small static gallery of selective gates.",
+  "type": "module",
+  "packageManager": "pnpm@8.15.4",
+  "scripts": {
+    "import-photo": "node scripts/import-photo.mjs",
+    "serve": "node scripts/serve.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "exifr": "7.1.3",
+    "sharp": "0.34.5"
+  }
+}

@@ -1,0 +1,9 @@
+node_modules/
+.pnpm-store/
+.tmp-import-test/
+incoming/*
+!incoming/.gitkeep
+!incoming/README.md
+!incoming/done/
+incoming/done/*
+!incoming/done/.gitkeep

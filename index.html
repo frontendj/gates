@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Gates</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="site-header">
+      <p class="eyebrow">Photo notes</p>
+      <h1>Gates</h1>
+      <p class="intro">
+        A small collection of gates built to let certain passers-by through, such as people,
+        dogs, or cars, while keeping animals like goats, cows, or horses out.
+      </p>
+    </header>
+
+    <main>
+      <section class="gallery" id="gallery" aria-live="polite"></section>
+      <p class="empty-state" id="empty-state" hidden>No photos yet.</p>
+    </main>
+
+    <div class="lightbox" id="lightbox" aria-modal="true" role="dialog" aria-label="Photo viewer" hidden>
+      <button class="lightbox__button lightbox__close" type="button" id="close-lightbox" aria-label="Close photo viewer">
+        &times;
+      </button>
+      <button class="lightbox__button lightbox__previous" type="button" id="previous-photo" aria-label="Previous photo">
+        &#8249;
+      </button>
+      <figure class="lightbox__content">
+        <img class="lightbox__image" id="lightbox-image" alt="">
+        <figcaption class="lightbox__caption" id="lightbox-caption"></figcaption>
+      </figure>
+      <button class="lightbox__button lightbox__next" type="button" id="next-photo" aria-label="Next photo">
+        &#8250;
+      </button>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

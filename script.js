@@ -9,6 +9,7 @@ const nextPhotoButton = document.querySelector("#next-photo");
 
 let photos = [];
 let currentIndex = 0;
+const canEditDescriptions = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
 
 function getPreviewPath(photo) {
   return `photos/${photo.id}-sm.jpg`;
@@ -31,16 +32,20 @@ function renderGallery() {
   emptyState.hidden = photos.length > 0;
 
   photos.forEach((photo, index) => {
-    const card = document.createElement("button");
+    const card = document.createElement("article");
     card.className = "photo-card";
-    card.type = "button";
-    card.setAttribute("aria-label", `Open ${getPhotoAlt(photo)}`);
+
+    const imageButton = document.createElement("button");
+    imageButton.className = "photo-card__image-button";
+    imageButton.type = "button";
+    imageButton.setAttribute("aria-label", `Open ${getPhotoAlt(photo)}`);
 
     const image = document.createElement("img");
     image.className = "photo-card__image";
     image.src = getPreviewPath(photo);
     image.alt = getPhotoAlt(photo);
     image.loading = "lazy";
+    imageButton.append(image);
 
     const body = document.createElement("div");
     body.className = "photo-card__body";
@@ -60,10 +65,80 @@ function renderGallery() {
       body.append(description);
     }
 
-    card.append(image, body);
-    card.addEventListener("click", () => openLightbox(index));
+    if (canEditDescriptions) {
+      body.append(createDescriptionEditor(photo));
+    }
+
+    card.append(imageButton, body);
+    imageButton.addEventListener("click", () => openLightbox(index));
     gallery.append(card);
   });
+}
+
+function createDescriptionEditor(photo) {
+  const form = document.createElement("form");
+  form.className = "description-editor";
+
+  const label = document.createElement("label");
+  label.className = "description-editor__label";
+  label.textContent = `Description for photo ${photo.id}`;
+
+  const textarea = document.createElement("textarea");
+  textarea.className = "description-editor__textarea";
+  textarea.value = photo.description || "";
+  textarea.rows = 3;
+
+  const actions = document.createElement("div");
+  actions.className = "description-editor__actions";
+
+  const status = document.createElement("span");
+  status.className = "description-editor__status";
+  status.setAttribute("aria-live", "polite");
+
+  const saveButton = document.createElement("button");
+  saveButton.className = "description-editor__save";
+  saveButton.type = "submit";
+  saveButton.textContent = "Save";
+
+  actions.append(status, saveButton);
+  label.append(textarea);
+  form.append(label, actions);
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await saveDescription(photo, textarea.value, status, saveButton);
+  });
+
+  return form;
+}
+
+async function saveDescription(photo, description, status, saveButton) {
+  saveButton.disabled = true;
+  status.textContent = "Saving...";
+
+  try {
+    const response = await fetch(`api/photos/${photo.id}/description`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ description }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Could not save description: ${response.status}`);
+    }
+
+    const data = await response.json();
+    photo.description = data.photo.description;
+    status.textContent = "Saved";
+    renderGallery();
+  } catch (error) {
+    console.error(error);
+    status.textContent = "Could not save";
+  } finally {
+    saveButton.disabled = false;
+  }
 }
 
 function openLightbox(index) {

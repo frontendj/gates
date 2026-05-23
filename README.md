@@ -14,6 +14,13 @@ Then open `http://localhost:8000`.
 
 If port `8000` is busy, the server will automatically try the next available port and print the URL.
 
+## Edit Descriptions Locally
+
+When the site is opened from `pnpm serve` on `localhost`, each photo card shows a description editor.
+Edit the text and click Save to update `data/photos.json` directly.
+
+The deployed GitHub Pages site is read-only.
+
 ## Add Photos
 
 Drop one or more photos into `incoming/`, then run:

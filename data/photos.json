@@ -1,24 +1,76 @@
 [
   {
+    "id": 1,
+    "originalName": "20200921_182949.jpg",
+    "date": "2020-09-21",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
     "id": 2,
+    "originalName": "20200921_183332.jpg",
     "date": "2020-09-21",
     "camera": "samsung SM-G960F",
     "description": ""
   },
   {
     "id": 3,
-    "date": "2020-09-22",
+    "originalName": "20200921_183520.jpg",
+    "date": "2020-09-21",
     "camera": "samsung SM-G960F",
     "description": ""
   },
   {
     "id": 4,
+    "originalName": "20200922_102002.jpg",
     "date": "2020-09-22",
+    "latitude": 54.98065,
+    "longitude": -2.370545,
+    "location": "Henshaw, Bardon Mill, Northumberland, North East, England, NE47 7HG, United Kingdom",
     "camera": "samsung SM-G960F",
     "description": ""
   },
   {
     "id": 5,
+    "originalName": "20200922_104959.jpg",
+    "date": "2020-09-22",
+    "latitude": 54.999981,
+    "longitude": -2.41206,
+    "location": "Melkridge, Northumberland, North East, England, NE49 9PT, United Kingdom",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 6,
+    "originalName": "20200922_110128.jpg",
+    "date": "2020-09-22",
+    "camera": "samsung SM-A207F",
+    "description": ""
+  },
+  {
+    "id": 7,
+    "originalName": "20200922_113420.jpg",
+    "date": "2020-09-22",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 8,
+    "originalName": "20200922_121108.jpg",
+    "date": "2020-09-22",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 9,
+    "originalName": "20200922_125956.jpg",
+    "date": "2020-09-22",
+    "camera": "samsung SM-G960F",
+    "description": ""
+  },
+  {
+    "id": 10,
+    "originalName": "20200922_150309.jpg",
     "date": "2020-09-22",
     "latitude": 54.992945,
     "longitude": -2.562984,
@@ -27,7 +79,8 @@
     "description": ""
   },
   {
-    "id": 6,
+    "id": 11,
+    "originalName": "20200922_150530.jpg",
     "date": "2020-09-22",
     "latitude": 54.986655,
     "longitude": -2.536766,
@@ -36,7 +89,8 @@
     "description": ""
   },
   {
-    "id": 7,
+    "id": 12,
+    "originalName": "20200922_151233.jpg",
     "date": "2020-09-22",
     "latitude": 54.980162,
     "longitude": -2.54827,
@@ -45,7 +99,8 @@
     "description": ""
   },
   {
-    "id": 8,
+    "id": 13,
+    "originalName": "20200922_152709.jpg",
     "date": "2020-09-22",
     "latitude": 54.988445,
     "longitude": -2.553956,
@@ -54,16 +109,8 @@
     "description": ""
   },
   {
-    "id": 9,
-    "date": "2020-09-22",
-    "latitude": 54.988519,
-    "longitude": -2.55409,
-    "location": "B6318, Thirlwall, Gilsland, Northumberland, North East, England, CA8 7EJ, United Kingdom",
-    "camera": "samsung SM-G960F",
-    "description": ""
-  },
-  {
-    "id": 10,
+    "id": 14,
+    "originalName": "20200923_100859.jpg",
     "date": "2020-09-23",
     "latitude": 54.989469,
     "longitude": -2.578519,
@@ -72,25 +119,29 @@
     "description": ""
   },
   {
-    "id": 11,
+    "id": 15,
+    "originalName": "20200923_101849.jpg",
     "date": "2020-09-23",
     "camera": "samsung SM-G960F",
     "description": ""
   },
   {
-    "id": 12,
+    "id": 16,
+    "originalName": "20200923_124630.jpg",
     "date": "2020-09-23",
     "camera": "samsung SM-G960F",
     "description": ""
   },
   {
-    "id": 13,
+    "id": 17,
+    "originalName": "20200923_125737.jpg",
     "date": "2020-09-23",
     "camera": "samsung SM-G960F",
     "description": ""
   },
   {
-    "id": 14,
+    "id": 18,
+    "originalName": "20201107_153039.jpg",
     "date": "2020-11-07",
     "latitude": 51.670818,
     "longitude": 0.054766,
@@ -99,7 +150,8 @@
     "description": ""
   },
   {
-    "id": 15,
+    "id": 19,
+    "originalName": "20210812_104827.jpg",
     "date": "2021-08-12",
     "latitude": 46.307534,
     "longitude": 13.812125,
@@ -108,13 +160,35 @@
     "description": ""
   },
   {
-    "id": 16,
+    "id": 20,
+    "originalName": "20240316_160507.jpg",
     "date": "2024-03-16",
     "camera": "samsung SM-S901B",
     "description": ""
   },
   {
-    "id": 17,
+    "id": 21,
+    "originalName": "20240714_153407.jpg",
+    "date": "2024-07-14",
+    "latitude": 51.201159,
+    "longitude": -0.369714,
+    "location": "Wolvens Lane, Broadmoor, Wotton, Westcott, Mole Valley, Surrey, England, RH4 3JL, United Kingdom",
+    "camera": "samsung SM-S901B",
+    "description": ""
+  },
+  {
+    "id": 22,
+    "originalName": "20240811_114042.jpg",
+    "date": "2024-08-11",
+    "latitude": 51.121654,
+    "longitude": 1.306827,
+    "location": "Drop Redoubt Road, Clarendon, Dover, Kent, England, CT17 9AP, United Kingdom",
+    "camera": "samsung SM-S901B",
+    "description": ""
+  },
+  {
+    "id": 23,
+    "originalName": "20240826_171716.jpg",
     "date": "2024-08-26",
     "camera": "samsung SM-S901B",
     "description": ""

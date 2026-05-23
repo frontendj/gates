@@ -1,4 +1,11 @@
-import { mkdir, readdir, readFile, rename, stat, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  readdir,
+  readFile,
+  rename,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import exifr from "exifr";
@@ -12,7 +19,14 @@ const FULL_MAX_SIZE = 2400;
 const PREVIEW_MAX_SIZE = 800;
 const FULL_QUALITY = 86;
 const PREVIEW_QUALITY = 78;
-const IMPORTABLE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".heic", ".heif"]);
+const IMPORTABLE_EXTENSIONS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".heic",
+  ".heif",
+]);
 
 const args = process.argv.slice(2);
 const shouldGeocode = !args.includes("--no-geocode");
@@ -54,7 +68,9 @@ async function main() {
 
   await writePhotoRecords(records);
 
-  console.log(`Imported ${imported.length} photo${imported.length === 1 ? "" : "s"}.`);
+  console.log(
+    `Imported ${imported.length} photo${imported.length === 1 ? "" : "s"}.`,
+  );
   for (const record of imported) {
     console.log(`#${record.id}: ${record.location || "location unknown"}`);
   }
@@ -97,8 +113,16 @@ function isImportableImage(filePath) {
 }
 
 async function readPhotoRecords() {
-  const json = await readFile(DATA_FILE, "utf8");
-  return JSON.parse(json);
+  try {
+    const json = await readFile(DATA_FILE, "utf8");
+    return JSON.parse(json);
+  } catch (error) {
+    if (error.code === "ENOENT") {
+      return [];
+    }
+
+    throw error;
+  }
 }
 
 async function writePhotoRecords(records) {
@@ -124,18 +148,22 @@ async function getExistingImageIds() {
 
 async function readImageMetadata(source) {
   const [tags, gps] = await Promise.all([
-    exifr.parse(source, {
-      exif: true,
-      gps: true,
-      tiff: true,
-      ifd0: true,
-      pick: ["DateTimeOriginal", "CreateDate", "ModifyDate", "Make", "Model"],
-    }).catch(() => null),
+    exifr
+      .parse(source, {
+        exif: true,
+        gps: true,
+        tiff: true,
+        ifd0: true,
+        pick: ["DateTimeOriginal", "CreateDate", "ModifyDate", "Make", "Model"],
+      })
+      .catch(() => null),
     exifr.gps(source).catch(() => null),
   ]);
 
   return {
-    date: formatExifDate(tags?.DateTimeOriginal || tags?.CreateDate || tags?.ModifyDate),
+    date: formatExifDate(
+      tags?.DateTimeOriginal || tags?.CreateDate || tags?.ModifyDate,
+    ),
     latitude: gps?.latitude,
     longitude: gps?.longitude,
     camera: [tags?.Make, tags?.Model].filter(Boolean).join(" ").trim(),
@@ -206,7 +234,10 @@ async function createPhotoRecord(id, source, metadata) {
 }
 
 function getCoordinates(metadata) {
-  if (!Number.isFinite(metadata.latitude) || !Number.isFinite(metadata.longitude)) {
+  if (
+    !Number.isFinite(metadata.latitude) ||
+    !Number.isFinite(metadata.longitude)
+  ) {
     return null;
   }
 

@@ -2,6 +2,8 @@
 
 A small static gallery for photos of gates that allow some kinds of passage while blocking others.
 
+Deployed at: http://frontendj.github.io/gates
+
 ## Run The Website
 
 ```sh

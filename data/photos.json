@@ -192,5 +192,27 @@
     "date": "2024-08-26",
     "camera": "samsung SM-S901B",
     "description": "I'm not quite sure what the right gate is for"
+  },
+  {
+    "id": 24,
+    "originalName": "PXL_20250705_112851528.jpg",
+    "date": "2025-07-05",
+    "latitude": 51.009081,
+    "longitude": 0.151333,
+    "location": "Fowley Lane, High Hurstwood, Buxted, Wealden, East Sussex, England, TN22 4BQ, United Kingdom",
+    "camera": "Google Pixel 8",
+    "description": "This is a controlled gate for small dogs, to prevent them from jumping to a railroad",
+    "groupId": "g-24"
+  },
+  {
+    "id": 25,
+    "originalName": "PXL_20250705_112918626.jpg",
+    "date": "2025-07-05",
+    "latitude": 51.009081,
+    "longitude": 0.151333,
+    "location": "Fowley Lane, High Hurstwood, Buxted, Wealden, East Sussex, England, TN22 4BQ, United Kingdom",
+    "camera": "Google Pixel 8",
+    "groupId": "g-24",
+    "description": "This is a controlled gate for small dogs, to prevent them from jumping to a railroad"
   }
 ]

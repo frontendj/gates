@@ -19,7 +19,7 @@ If port `8000` is busy, the server will automatically try the next available por
 When the site is opened from `pnpm serve` on `localhost`, each photo card shows a description editor.
 Descriptions save on blur, Shift+Enter, or 3 seconds after you stop typing. If a card represents a group, this edits the first photo in that group.
 
-You can also edit the current photo description in the full-screen viewer. This is useful for grouped photos where each open/closed/detail state needs its own note.
+You can also edit the current photo description in the inline detail section. This is useful for grouped photos where each open/closed/detail state needs its own note.
 
 The deployed GitHub Pages site is read-only.
 
@@ -72,7 +72,7 @@ Related photos stay as normal records in `data/photos.json`, with optional group
 }
 ```
 
-Photos with the same `groupId` appear as one gallery card. The card uses the first photo as the cover and shows `+N` for the remaining photos. Opening the card lets you move through the grouped photos in full-screen mode.
+Photos with the same `groupId` appear as one gallery card. The card uses the first photo as the cover and shows `+N` for the remaining photos. Opening the card shows the group in the inline detail section.
 
 To import all current input photos as one group:
 

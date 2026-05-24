@@ -1,15 +1,16 @@
 const gallery = document.querySelector("#gallery");
 const emptyState = document.querySelector("#empty-state");
-const lightbox = document.querySelector("#lightbox");
-const lightboxImage = document.querySelector("#lightbox-image");
-const lightboxCaption = document.querySelector("#lightbox-caption");
-const closeLightboxButton = document.querySelector("#close-lightbox");
-const previousPhotoButton = document.querySelector("#previous-photo");
-const nextPhotoButton = document.querySelector("#next-photo");
+const detail = document.querySelector("#detail");
+const detailImageFrame = document.querySelector("#detail-image-frame");
+const detailImage = document.querySelector("#detail-image");
+const detailMiniGallery = document.querySelector("#detail-mini-gallery");
+const detailCopy = document.querySelector("#detail-copy");
+const previousGroupButton = document.querySelector("#previous-group");
+const nextGroupButton = document.querySelector("#next-group");
 
 let photos = [];
 let galleryItems = [];
-let lightboxPhotos = [];
+let detailPhotos = [];
 let currentGroupIndex = 0;
 let currentPhotoIndex = 0;
 const descriptionSaveDelay = 3000;
@@ -33,6 +34,10 @@ function getPhotoAlt(photo) {
 
 function getMetaText(photo) {
   return [photo.groupRole, photo.location, photo.date].filter(Boolean).join(" - ");
+}
+
+function getLongText(photo) {
+  return photo.explanation || photo.notes || photo.longDescription || "";
 }
 
 function buildGalleryItems() {
@@ -73,6 +78,11 @@ function renderGallery() {
     const [leadPhoto] = item.photos;
     const card = document.createElement("article");
     card.className = "photo-card";
+    card.dataset.groupIndex = String(groupIndex);
+
+    if (!detail.hidden && groupIndex === currentGroupIndex) {
+      card.classList.add("photo-card--active");
+    }
 
     const imageButton = document.createElement("button");
     imageButton.className = "photo-card__image-button";
@@ -93,31 +103,13 @@ function renderGallery() {
       imageButton.append(count);
     }
 
-    const body = document.createElement("div");
-    body.className = "photo-card__body";
-
-    const metaText = getMetaText(leadPhoto);
-    if (metaText) {
-      const meta = document.createElement("div");
-      meta.className = "photo-card__meta";
-      meta.textContent = metaText;
-      body.append(meta);
-    }
-
-    if (leadPhoto.description) {
-      const description = document.createElement("p");
-      description.className = "photo-card__description";
-      description.textContent = leadPhoto.description;
-      body.append(description);
-    }
-
-    if (canEditDescriptions) {
-      body.append(createDescriptionEditor(leadPhoto));
-    }
-
-    card.append(imageButton, body);
-    imageButton.addEventListener("click", () => openLightbox(groupIndex));
+    card.append(imageButton);
+    imageButton.addEventListener("click", () => openDetail(groupIndex));
     gallery.append(card);
+
+    if (!detail.hidden && groupIndex === currentGroupIndex) {
+      gallery.append(detail);
+    }
   });
 }
 
@@ -202,8 +194,8 @@ async function saveDescription(photo, description, status) {
     status.textContent = "Saved";
     renderGallery();
 
-    if (!lightbox.hidden) {
-      updateLightbox();
+    if (!detail.hidden) {
+      updateDetail();
     }
   } catch (error) {
     console.error(error);
@@ -211,81 +203,141 @@ async function saveDescription(photo, description, status) {
   }
 }
 
-function openLightbox(groupIndex, photoIndex = 0) {
+function openDetail(groupIndex, photoIndex = 0) {
   currentGroupIndex = groupIndex;
   currentPhotoIndex = photoIndex;
-  updateLightbox();
-  lightbox.hidden = false;
-  document.body.style.overflow = "hidden";
-  closeLightboxButton.focus();
+  detail.hidden = false;
+  updateDetail();
+  placeDetailAfterActiveCard();
+  scrollDetailIntoView();
 }
 
-function closeLightbox() {
-  lightbox.hidden = true;
-  document.body.style.overflow = "";
-}
-
-function showGroup(offset) {
+function showGroup(offset, focusAfterUpdate) {
   currentGroupIndex = (currentGroupIndex + offset + galleryItems.length) % galleryItems.length;
   currentPhotoIndex = 0;
-  updateLightbox();
+  updateDetail();
+  setActiveCard();
+  placeDetailAfterActiveCard();
+  scrollDetailIntoView();
+
+  if (focusAfterUpdate) {
+    requestAnimationFrame(() => {
+      focusAfterUpdate.focus();
+    });
+  }
 }
 
 function showGroupPhoto(photoIndex) {
   currentPhotoIndex = photoIndex;
-  updateLightbox();
+  updateDetail();
 }
 
-function updateLightbox() {
+function updateDetail() {
   const currentGroup = galleryItems[currentGroupIndex];
 
   if (!currentGroup) {
-    closeLightbox();
+    detail.hidden = true;
     return;
   }
 
-  lightboxPhotos = currentGroup.photos;
+  detailPhotos = currentGroup.photos;
 
-  if (currentPhotoIndex >= lightboxPhotos.length) {
+  if (currentPhotoIndex >= detailPhotos.length) {
     currentPhotoIndex = 0;
   }
 
-  const photo = lightboxPhotos[currentPhotoIndex];
-  lightboxImage.src = getFullPath(photo);
-  lightboxImage.alt = getPhotoAlt(photo);
+  const photo = detailPhotos[currentPhotoIndex];
+  reserveDetailImageSpace(photo);
+  detailImage.src = getFullPath(photo);
+  detailImage.alt = getPhotoAlt(photo);
 
   const metaText = getMetaText(photo);
-  lightboxCaption.innerHTML = "";
+  detailCopy.innerHTML = "";
+  detailMiniGallery.innerHTML = "";
 
-  const text = [metaText, photo.description].filter(Boolean).join(" - ");
-  if (text) {
-    const captionText = document.createElement("p");
-    captionText.className = "lightbox__caption-text";
-    captionText.textContent = text;
-    lightboxCaption.append(captionText);
+  const heading = document.createElement("p");
+  heading.className = "detail__eyebrow";
+  heading.textContent = currentGroup.photos.length > 1 ? "Linked gate study" : "Gate study";
+  detailCopy.append(heading);
+
+  if (metaText) {
+    const meta = document.createElement("p");
+    meta.className = "detail__meta";
+    meta.textContent = metaText;
+    detailCopy.append(meta);
   }
 
-  if (lightboxPhotos.length > 1) {
+  if (photo.description) {
+    const description = document.createElement("p");
+    description.className = "detail__description";
+    description.textContent = photo.description;
+    detailCopy.append(description);
+  }
+
+  if (getLongText(photo)) {
+    const explanation = document.createElement("p");
+    explanation.className = "detail__explanation";
+    explanation.textContent = getLongText(photo);
+    detailCopy.append(explanation);
+  }
+
+  if (detailPhotos.length > 1) {
     const position = document.createElement("p");
-    position.className = "lightbox__position";
-    position.textContent = `${currentPhotoIndex + 1} of ${lightboxPhotos.length}`;
-    lightboxCaption.append(position);
-    lightboxCaption.append(createMiniGallery(lightboxPhotos));
+    position.className = "detail__position";
+    position.textContent = `${currentPhotoIndex + 1} of ${detailPhotos.length}`;
+    detailMiniGallery.append(position);
+    detailMiniGallery.append(createMiniGallery(detailPhotos));
+
+    const sideGallery = document.createElement("div");
+    sideGallery.className = "detail__side-gallery";
+    sideGallery.append(createMiniGallery(detailPhotos));
+    detailCopy.append(sideGallery);
   }
 
   if (canEditDescriptions) {
-    lightboxCaption.append(createDescriptionEditor(photo));
+    detailCopy.append(createDescriptionEditor(photo));
   }
+}
+
+function placeDetailAfterActiveCard() {
+  const activeCard = gallery.querySelector(`[data-group-index="${currentGroupIndex}"]`);
+
+  if (activeCard) {
+    activeCard.after(detail);
+  }
+}
+
+function scrollDetailIntoView() {
+  requestAnimationFrame(() => {
+    if (location.hash !== "#detail") {
+      history.pushState(null, "", "#detail");
+    }
+
+    const top = detail.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({
+      top,
+      left: 0,
+      behavior: "auto",
+    });
+  });
+}
+
+function setActiveCard() {
+  gallery.querySelectorAll(".photo-card--active").forEach((card) => {
+    card.classList.remove("photo-card--active");
+  });
+
+  const activeCard = gallery.querySelector(`[data-group-index="${currentGroupIndex}"]`);
+  activeCard?.classList.add("photo-card--active");
 }
 
 function createMiniGallery(groupPhotos) {
   const miniGallery = document.createElement("div");
-  miniGallery.className = "lightbox__mini-gallery";
-  miniGallery.setAttribute("aria-label", "Photos in this group");
+  miniGallery.className = "mini-gallery";
 
   groupPhotos.forEach((photo, index) => {
     const button = document.createElement("button");
-    button.className = "lightbox__mini-photo";
+    button.className = "mini-gallery__photo";
     button.type = "button";
     button.setAttribute("aria-label", `Show photo ${index + 1} of ${groupPhotos.length}`);
     button.setAttribute("aria-current", index === currentPhotoIndex ? "true" : "false");
@@ -303,17 +355,30 @@ function createMiniGallery(groupPhotos) {
   return miniGallery;
 }
 
+function reserveDetailImageSpace(photo) {
+  const aspectRatio = Number(photo.aspectRatio || (photo.width && photo.height ? photo.width / photo.height : 0));
+
+  if (Number.isFinite(aspectRatio) && aspectRatio > 0) {
+    detailImageFrame.style.aspectRatio = String(aspectRatio);
+    return;
+  }
+
+  detailImageFrame.style.aspectRatio = "";
+}
+
+detailImage.addEventListener("load", () => {
+  if (detailImage.naturalWidth && detailImage.naturalHeight) {
+    detailImageFrame.style.aspectRatio = `${detailImage.naturalWidth} / ${detailImage.naturalHeight}`;
+  }
+});
+
 function handleKeydown(event) {
-  if (lightbox.hidden) {
+  if (detail.hidden) {
     return;
   }
 
   if (["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
     return;
-  }
-
-  if (event.key === "Escape") {
-    closeLightbox();
   }
 
   if (event.key === "ArrowLeft") {
@@ -342,14 +407,8 @@ async function loadPhotos() {
   }
 }
 
-closeLightboxButton.addEventListener("click", closeLightbox);
-previousPhotoButton.addEventListener("click", () => showGroup(-1));
-nextPhotoButton.addEventListener("click", () => showGroup(1));
-lightbox.addEventListener("click", (event) => {
-  if (event.target === lightbox) {
-    closeLightbox();
-  }
-});
+previousGroupButton.addEventListener("click", () => showGroup(-1, previousGroupButton));
+nextGroupButton.addEventListener("click", () => showGroup(1, nextGroupButton));
 document.addEventListener("keydown", handleKeydown);
 
 loadPhotos();

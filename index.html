@@ -19,23 +19,27 @@
     <main>
       <section class="gallery" id="gallery" aria-live="polite"></section>
       <p class="empty-state" id="empty-state" hidden>No photos yet.</p>
-    </main>
 
-    <div class="lightbox" id="lightbox" aria-modal="true" role="dialog" aria-label="Photo viewer" hidden>
-      <button class="lightbox__button lightbox__close" type="button" id="close-lightbox" aria-label="Close photo viewer">
-        &times;
-      </button>
-      <button class="lightbox__button lightbox__previous" type="button" id="previous-photo" aria-label="Previous photo">
-        &#8249;
-      </button>
-      <figure class="lightbox__content">
-        <img class="lightbox__image" id="lightbox-image" alt="">
-        <figcaption class="lightbox__caption" id="lightbox-caption"></figcaption>
-      </figure>
-      <button class="lightbox__button lightbox__next" type="button" id="next-photo" aria-label="Next photo">
-        &#8250;
-      </button>
-    </div>
+      <section class="detail" id="detail" aria-live="polite" hidden>
+        <div class="detail__media">
+          <div class="detail__image-frame" id="detail-image-frame">
+            <img class="detail__image" id="detail-image" alt="">
+          </div>
+          <div class="detail__mini-gallery" id="detail-mini-gallery" aria-label="Photos in this group"></div>
+        </div>
+        <aside class="detail__notes">
+          <div class="detail__controls">
+            <button class="detail__nav" type="button" id="previous-group" aria-label="Previous gate">
+              Previous
+            </button>
+            <button class="detail__nav" type="button" id="next-group" aria-label="Next gate">
+              Next
+            </button>
+          </div>
+          <div id="detail-copy"></div>
+        </aside>
+      </section>
+    </main>
 
     <script src="script.js"></script>
   </body>

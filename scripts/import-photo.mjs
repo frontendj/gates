@@ -63,9 +63,10 @@ async function main() {
     console.log(`Importing ${source} as #${id}...`);
 
     const metadata = await readImageMetadata(source);
-    await writeGalleryImages(source, id);
+    const imageMetadata = await writeGalleryImages(source, id);
 
     const record = await createPhotoRecord(id, source, metadata, {
+      imageMetadata,
       groupId: getGroupId(imported, id, metadata, explicitGroupId),
       groupRole: groupRoles[index],
     });
@@ -227,7 +228,7 @@ async function readImageMetadata(source) {
 async function writeGalleryImages(source, id) {
   const image = sharp(source, { failOn: "none" }).rotate();
 
-  await image
+  const fullOutput = await image
     .clone()
     .resize({
       width: FULL_MAX_SIZE,
@@ -254,6 +255,12 @@ async function writeGalleryImages(source, id) {
       mozjpeg: true,
     })
     .toFile(path.join(PHOTOS_DIR, `${id}-sm.jpg`));
+
+  return {
+    width: fullOutput.width,
+    height: fullOutput.height,
+    aspectRatio: Number((fullOutput.width / fullOutput.height).toFixed(4)),
+  };
 }
 
 async function createPhotoRecord(id, source, metadata, groupOptions = {}) {
@@ -281,6 +288,12 @@ async function createPhotoRecord(id, source, metadata, groupOptions = {}) {
 
   if (metadata.camera) {
     record.camera = metadata.camera;
+  }
+
+  if (groupOptions.imageMetadata?.width && groupOptions.imageMetadata?.height) {
+    record.width = groupOptions.imageMetadata.width;
+    record.height = groupOptions.imageMetadata.height;
+    record.aspectRatio = groupOptions.imageMetadata.aspectRatio;
   }
 
   if (groupOptions.groupId) {

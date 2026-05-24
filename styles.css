@@ -84,6 +84,7 @@ main {
 }
 
 .photo-card__image-button {
+  position: relative;
   display: block;
   padding: 0;
   border: 0;
@@ -103,6 +104,19 @@ main {
   aspect-ratio: 4 / 3;
   object-fit: cover;
   background: var(--border);
+}
+
+.photo-card__count {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.75rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.65rem;
+  background: rgb(0 0 0 / 68%);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .photo-card__body {
@@ -218,11 +232,39 @@ main {
 }
 
 .lightbox__caption {
+  display: grid;
+  gap: 0.75rem;
   max-width: 48rem;
   margin: 0 auto;
   color: rgb(255 255 255 / 80%);
   line-height: 1.5;
   text-align: center;
+}
+
+.lightbox__caption-text,
+.lightbox__position {
+  margin: 0;
+}
+
+.lightbox__position {
+  color: rgb(255 255 255 / 60%);
+  font-size: 0.9rem;
+}
+
+.lightbox .description-editor {
+  width: min(100%, 36rem);
+  margin: 0 auto;
+  border-top-color: rgb(255 255 255 / 18%);
+  text-align: left;
+}
+
+.lightbox .description-editor__textarea {
+  background: rgb(255 255 255 / 9%);
+  color: white;
+}
+
+.lightbox .description-editor__save {
+  color: white;
 }
 
 .lightbox__button {

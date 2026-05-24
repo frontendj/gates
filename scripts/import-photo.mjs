@@ -28,9 +28,18 @@ const IMPORTABLE_EXTENSIONS = new Set([
   ".heif",
 ]);
 
-const args = process.argv.slice(2);
-const shouldGeocode = !args.includes("--no-geocode");
-const inputArg = args.find((arg) => !arg.startsWith("--")) || DEFAULT_INPUT_DIR;
+const options = parseArgs(process.argv.slice(2));
+const shouldGeocode = !options.flags.has("no-geocode");
+const shouldGroupImport = options.flags.has("grouping");
+const requestedLocationPrecision = Number(options.values.get("location-precision") || 5);
+const locationPrecision = Number.isInteger(requestedLocationPrecision)
+  ? Math.min(Math.max(requestedLocationPrecision, 0), 6)
+  : 5;
+const groupRoles = (options.values.get("roles") || "")
+  .split(",")
+  .map((role) => role.trim())
+  .filter(Boolean);
+const inputArg = options.positionals[0] || DEFAULT_INPUT_DIR;
 
 async function main() {
   await ensureDirectories();
@@ -44,9 +53,10 @@ async function main() {
 
   const records = await readPhotoRecords();
   let nextId = await getNextId(records);
+  const explicitGroupId = shouldGroupImport ? `g-${nextId}` : "";
   const imported = [];
 
-  for (const source of sources) {
+  for (const [index, source] of sources.entries()) {
     const id = nextId;
     nextId += 1;
 
@@ -55,7 +65,10 @@ async function main() {
     const metadata = await readImageMetadata(source);
     await writeGalleryImages(source, id);
 
-    const record = await createPhotoRecord(id, source, metadata);
+    const record = await createPhotoRecord(id, source, metadata, {
+      groupId: getGroupId(imported, id, metadata, explicitGroupId),
+      groupRole: groupRoles[index],
+    });
     records.push(record);
 
     await moveSourceToDone(source, id);
@@ -74,6 +87,7 @@ async function main() {
   for (const record of imported) {
     console.log(`#${record.id}: ${record.location || "location unknown"}`);
   }
+  logDetectedGroups(imported);
 }
 
 async function ensureDirectories() {
@@ -110,6 +124,46 @@ async function getSourceFiles(inputPath) {
 
 function isImportableImage(filePath) {
   return IMPORTABLE_EXTENSIONS.has(path.extname(filePath).toLowerCase());
+}
+
+function parseArgs(rawArgs) {
+  const flags = new Set();
+  const values = new Map();
+  const positionals = [];
+  const valueFlags = new Set(["roles", "location-precision"]);
+
+  for (let index = 0; index < rawArgs.length; index += 1) {
+    const arg = rawArgs[index];
+
+    if (arg === "--") {
+      continue;
+    }
+
+    if (!arg.startsWith("--")) {
+      positionals.push(arg);
+      continue;
+    }
+
+    const [rawName, inlineValue] = arg.slice(2).split("=", 2);
+
+    if (valueFlags.has(rawName)) {
+      const nextArg = rawArgs[index + 1];
+      const value = inlineValue ?? (!nextArg?.startsWith("--") ? nextArg : "");
+      values.set(rawName, value);
+
+      if (inlineValue === undefined && value) {
+        index += 1;
+      }
+    } else {
+      flags.add(rawName);
+    }
+  }
+
+  return {
+    flags,
+    values,
+    positionals,
+  };
 }
 
 async function readPhotoRecords() {
@@ -202,7 +256,7 @@ async function writeGalleryImages(source, id) {
     .toFile(path.join(PHOTOS_DIR, `${id}-sm.jpg`));
 }
 
-async function createPhotoRecord(id, source, metadata) {
+async function createPhotoRecord(id, source, metadata, groupOptions = {}) {
   const record = {
     id,
     originalName: path.basename(source),
@@ -229,8 +283,73 @@ async function createPhotoRecord(id, source, metadata) {
     record.camera = metadata.camera;
   }
 
+  if (groupOptions.groupId) {
+    record.groupId = groupOptions.groupId;
+  }
+
+  if (groupOptions.groupRole) {
+    record.groupRole = groupOptions.groupRole;
+  }
+
   record.description = "";
   return record;
+}
+
+function getGroupId(importedRecords, id, metadata, explicitGroupId) {
+  if (explicitGroupId) {
+    return explicitGroupId;
+  }
+
+  const coordinates = getCoordinates(metadata);
+
+  if (!coordinates) {
+    return "";
+  }
+
+  const locationKey = getLocationKey(coordinates);
+  const matches = importedRecords.filter((record) => getLocationKey(record) === locationKey);
+
+  if (matches.length === 0) {
+    return "";
+  }
+
+  const existingGroupId = matches.find((record) => record.groupId)?.groupId;
+  const groupId = existingGroupId || `g-${matches[0].id}`;
+
+  for (const match of matches) {
+    match.groupId ||= groupId;
+  }
+
+  return groupId;
+}
+
+function logDetectedGroups(imported) {
+  const groups = new Map();
+
+  for (const record of imported) {
+    if (!record.groupId) {
+      continue;
+    }
+
+    if (!groups.has(record.groupId)) {
+      groups.set(record.groupId, []);
+    }
+
+    groups.get(record.groupId).push(record);
+  }
+
+  for (const [groupId, groupRecords] of groups) {
+    if (groupRecords.length < 2) {
+      continue;
+    }
+
+    const ids = groupRecords.map((record) => `#${record.id}`).join(", ");
+    const locationKey = getLocationKey(groupRecords[0]);
+    const reason = shouldGroupImport
+      ? "explicit --grouping import"
+      : `matching GPS location ${locationKey}`;
+    console.log(`Detected group ${groupId}: ${ids} (${reason}).`);
+  }
 }
 
 function getCoordinates(metadata) {
@@ -245,6 +364,14 @@ function getCoordinates(metadata) {
     latitude: Number(metadata.latitude.toFixed(6)),
     longitude: Number(metadata.longitude.toFixed(6)),
   };
+}
+
+function getLocationKey(record) {
+  if (!Number.isFinite(record.latitude) || !Number.isFinite(record.longitude)) {
+    return "";
+  }
+
+  return `${record.latitude.toFixed(locationPrecision)},${record.longitude.toFixed(locationPrecision)}`;
 }
 
 async function reverseGeocode({ latitude, longitude }) {

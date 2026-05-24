@@ -8,8 +8,11 @@ const previousPhotoButton = document.querySelector("#previous-photo");
 const nextPhotoButton = document.querySelector("#next-photo");
 
 let photos = [];
+let lightboxPhotos = [];
 let currentIndex = 0;
-const canEditDescriptions = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
+const canEditDescriptions = ["localhost", "127.0.0.1", "::1"].includes(
+  location.hostname,
+);
 
 function getPreviewPath(photo) {
   return `photos/${photo.id}-sm.jpg`;
@@ -24,33 +27,70 @@ function getPhotoAlt(photo) {
 }
 
 function getMetaText(photo) {
-  return [photo.location, photo.date].filter(Boolean).join(" - ");
+  return [photo.groupRole, photo.location, photo.date].filter(Boolean).join(" - ");
+}
+
+function buildGalleryItems() {
+  const groupedItems = new Map();
+  const items = [];
+
+  photos.forEach((photo) => {
+    if (!photo.groupId) {
+      items.push({
+        type: "photo",
+        photos: [photo],
+      });
+      return;
+    }
+
+    if (!groupedItems.has(photo.groupId)) {
+      const item = {
+        type: "group",
+        groupId: photo.groupId,
+        photos: [],
+      };
+      groupedItems.set(photo.groupId, item);
+      items.push(item);
+    }
+
+    groupedItems.get(photo.groupId).photos.push(photo);
+  });
+
+  return items;
 }
 
 function renderGallery() {
   gallery.innerHTML = "";
   emptyState.hidden = photos.length > 0;
 
-  photos.forEach((photo, index) => {
+  buildGalleryItems().forEach((item) => {
+    const [leadPhoto] = item.photos;
     const card = document.createElement("article");
     card.className = "photo-card";
 
     const imageButton = document.createElement("button");
     imageButton.className = "photo-card__image-button";
     imageButton.type = "button";
-    imageButton.setAttribute("aria-label", `Open ${getPhotoAlt(photo)}`);
+    imageButton.setAttribute("aria-label", `Open ${getPhotoAlt(leadPhoto)}`);
 
     const image = document.createElement("img");
     image.className = "photo-card__image";
-    image.src = getPreviewPath(photo);
-    image.alt = getPhotoAlt(photo);
+    image.src = getPreviewPath(leadPhoto);
+    image.alt = getPhotoAlt(leadPhoto);
     image.loading = "lazy";
     imageButton.append(image);
+
+    if (item.photos.length > 1) {
+      const count = document.createElement("span");
+      count.className = "photo-card__count";
+      count.textContent = `+${item.photos.length - 1}`;
+      imageButton.append(count);
+    }
 
     const body = document.createElement("div");
     body.className = "photo-card__body";
 
-    const metaText = getMetaText(photo);
+    const metaText = getMetaText(leadPhoto);
     if (metaText) {
       const meta = document.createElement("div");
       meta.className = "photo-card__meta";
@@ -58,19 +98,19 @@ function renderGallery() {
       body.append(meta);
     }
 
-    if (photo.description) {
+    if (leadPhoto.description) {
       const description = document.createElement("p");
       description.className = "photo-card__description";
-      description.textContent = photo.description;
+      description.textContent = leadPhoto.description;
       body.append(description);
     }
 
     if (canEditDescriptions) {
-      body.append(createDescriptionEditor(photo));
+      body.append(createDescriptionEditor(leadPhoto));
     }
 
     card.append(imageButton, body);
-    imageButton.addEventListener("click", () => openLightbox(index));
+    imageButton.addEventListener("click", () => openLightbox(item.photos));
     gallery.append(card);
   });
 }
@@ -133,6 +173,10 @@ async function saveDescription(photo, description, status, saveButton) {
     photo.description = data.photo.description;
     status.textContent = "Saved";
     renderGallery();
+
+    if (!lightbox.hidden) {
+      updateLightbox();
+    }
   } catch (error) {
     console.error(error);
     status.textContent = "Could not save";
@@ -141,7 +185,8 @@ async function saveDescription(photo, description, status, saveButton) {
   }
 }
 
-function openLightbox(index) {
+function openLightbox(selectedPhotos, index = 0) {
+  lightboxPhotos = selectedPhotos;
   currentIndex = index;
   updateLightbox();
   lightbox.hidden = false;
@@ -155,21 +200,44 @@ function closeLightbox() {
 }
 
 function showPhoto(offset) {
-  currentIndex = (currentIndex + offset + photos.length) % photos.length;
+  currentIndex = (currentIndex + offset + lightboxPhotos.length) % lightboxPhotos.length;
   updateLightbox();
 }
 
 function updateLightbox() {
-  const photo = photos[currentIndex];
+  const photo = lightboxPhotos[currentIndex];
   lightboxImage.src = getFullPath(photo);
   lightboxImage.alt = getPhotoAlt(photo);
 
   const metaText = getMetaText(photo);
-  lightboxCaption.textContent = [metaText, photo.description].filter(Boolean).join(" - ");
+  lightboxCaption.innerHTML = "";
+
+  const text = [metaText, photo.description].filter(Boolean).join(" - ");
+  if (text) {
+    const captionText = document.createElement("p");
+    captionText.className = "lightbox__caption-text";
+    captionText.textContent = text;
+    lightboxCaption.append(captionText);
+  }
+
+  if (lightboxPhotos.length > 1) {
+    const position = document.createElement("p");
+    position.className = "lightbox__position";
+    position.textContent = `${currentIndex + 1} of ${lightboxPhotos.length}`;
+    lightboxCaption.append(position);
+  }
+
+  if (canEditDescriptions) {
+    lightboxCaption.append(createDescriptionEditor(photo));
+  }
 }
 
 function handleKeydown(event) {
   if (lightbox.hidden) {
+    return;
+  }
+
+  if (["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
     return;
   }
 

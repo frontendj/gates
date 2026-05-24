@@ -18,6 +18,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  overflow-x: clip;
   background:
     radial-gradient(circle at top left, rgb(176 90 42 / 12%), transparent 34rem),
     linear-gradient(180deg, rgb(255 255 255 / 42%), transparent 28rem),
@@ -182,12 +183,14 @@ main {
 .detail {
   display: grid;
   grid-column: 1 / -1;
-  grid-template-columns: minmax(0, 1.45fr) minmax(18rem, 0.7fr);
-  gap: 1.25rem;
-  align-items: start;
-  margin: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, min(40vw, 400px));
+  gap: 0;
+  align-items: stretch;
+  width: calc(100dvw - 40px);
+  max-width: 100%;
+  margin: 0 0 0 calc(-1 * 1.25rem);
   min-height: 100vh;
-  padding: 1rem 0 2rem;
+  padding: 20px;
   scroll-margin-top: 0;
 }
 
@@ -196,9 +199,17 @@ main {
   min-width: 0;
 }
 
+.detail__media {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  min-height: 100vh;
+}
+
 .detail__image-frame {
-  width: 100%;
-  max-height: 76vh;
+  width: min(100%, calc(100vh * var(--detail-aspect-ratio, 1.3333)));
+  max-width: calc((100vh - 40px) * var(--detail-aspect-ratio, 1.3333));
+  max-height: calc(100vh - 40px);
   background: #d9dcda;
   box-shadow: var(--shadow);
 }
@@ -207,19 +218,20 @@ main {
   display: block;
   width: 100%;
   height: 100%;
+  max-width: 100%;
   border-radius: 0;
   object-fit: contain;
 }
 
 .detail__notes {
   position: sticky;
-  top: 1rem;
+  top: 0;
   display: grid;
+  align-content: start;
   gap: 1rem;
   border-radius: 0;
-  padding: 1rem;
-  background: var(--card);
-  box-shadow: var(--shadow);
+  min-height: 100vh;
+  padding: 20px;
 }
 
 .detail__controls {
@@ -346,7 +358,17 @@ main {
     grid-template-columns: 1fr;
   }
 
+  .detail__media {
+    min-height: auto;
+  }
+
+  .detail__image-frame {
+    width: 100%;
+    max-height: none;
+  }
+
   .detail__notes {
     position: static;
+    min-height: auto;
   }
 }

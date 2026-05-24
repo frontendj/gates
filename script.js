@@ -288,11 +288,10 @@ function updateDetail() {
     const position = document.createElement("p");
     position.className = "detail__position";
     position.textContent = `${currentPhotoIndex + 1} of ${detailPhotos.length}`;
-    detailMiniGallery.append(position);
-    detailMiniGallery.append(createMiniGallery(detailPhotos));
 
     const sideGallery = document.createElement("div");
     sideGallery.className = "detail__side-gallery";
+    sideGallery.append(position);
     sideGallery.append(createMiniGallery(detailPhotos));
     detailCopy.append(sideGallery);
   }
@@ -392,15 +391,19 @@ function reserveDetailImageSpace(photo) {
 
   if (Number.isFinite(aspectRatio) && aspectRatio > 0) {
     detailImageFrame.style.aspectRatio = String(aspectRatio);
+    detailImageFrame.style.setProperty("--detail-aspect-ratio", aspectRatio);
     return;
   }
 
   detailImageFrame.style.aspectRatio = "";
+  detailImageFrame.style.removeProperty("--detail-aspect-ratio");
 }
 
 detailImage.addEventListener("load", () => {
   if (detailImage.naturalWidth && detailImage.naturalHeight) {
+    const aspectRatio = detailImage.naturalWidth / detailImage.naturalHeight;
     detailImageFrame.style.aspectRatio = `${detailImage.naturalWidth} / ${detailImage.naturalHeight}`;
+    detailImageFrame.style.setProperty("--detail-aspect-ratio", aspectRatio);
   }
 });
 

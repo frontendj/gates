@@ -232,6 +232,35 @@ main {
   font-size: 0.9rem;
 }
 
+.lightbox__mini-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.45rem;
+  max-width: 100%;
+}
+
+.lightbox__mini-photo {
+  overflow: hidden;
+  width: 3.25rem;
+  height: 3.25rem;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 0.45rem;
+  background: rgb(255 255 255 / 10%);
+  cursor: pointer;
+}
+
+.lightbox__mini-photo[aria-current="true"] {
+  border-color: var(--accent);
+}
+
+.lightbox__mini-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .lightbox .description-editor {
   width: min(100%, 36rem);
   margin: 0 auto;
@@ -304,6 +333,11 @@ main {
 
   .lightbox__caption {
     gap: 0.4rem;
+  }
+
+  .lightbox__mini-photo {
+    width: 2.75rem;
+    height: 2.75rem;
   }
 
   .lightbox .description-editor__textarea {

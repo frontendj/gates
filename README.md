@@ -23,6 +23,8 @@ You can also edit the current photo description in the full-screen viewer. This 
 
 The deployed GitHub Pages site is read-only.
 
+To preview the read-only public mode locally, open the local site with `?mode=view`.
+
 ## Add Photos
 
 Drop one or more photos into `incoming/`, then run:

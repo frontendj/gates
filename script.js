@@ -209,6 +209,7 @@ function openDetail(groupIndex, photoIndex = 0) {
   detail.hidden = false;
   updateDetail();
   placeDetailAfterActiveCard();
+  updateDetailHash();
   scrollDetailIntoView();
 }
 
@@ -218,6 +219,7 @@ function showGroup(offset, focusAfterUpdate) {
   updateDetail();
   setActiveCard();
   placeDetailAfterActiveCard();
+  updateDetailHash();
   scrollDetailIntoView();
 
   if (focusAfterUpdate) {
@@ -230,6 +232,7 @@ function showGroup(offset, focusAfterUpdate) {
 function showGroupPhoto(photoIndex) {
   currentPhotoIndex = photoIndex;
   updateDetail();
+  updateDetailHash();
 }
 
 function updateDetail() {
@@ -309,10 +312,6 @@ function placeDetailAfterActiveCard() {
 
 function scrollDetailIntoView() {
   requestAnimationFrame(() => {
-    if (location.hash !== "#detail") {
-      history.pushState(null, "", "#detail");
-    }
-
     const top = detail.getBoundingClientRect().top + window.scrollY;
     window.scrollTo({
       top,
@@ -320,6 +319,39 @@ function scrollDetailIntoView() {
       behavior: "auto",
     });
   });
+}
+
+function updateDetailHash() {
+  const photo = galleryItems[currentGroupIndex]?.photos[currentPhotoIndex];
+
+  if (!photo) {
+    return;
+  }
+
+  const hash = `#photo-${photo.id}`;
+
+  if (location.hash !== hash) {
+    history.pushState(null, "", hash);
+  }
+}
+
+function openDetailFromHash() {
+  const match = location.hash.match(/^#photo-(\d+)$/);
+
+  if (!match || galleryItems.length === 0) {
+    return;
+  }
+
+  const photoId = Number(match[1]);
+
+  for (const [groupIndex, item] of galleryItems.entries()) {
+    const photoIndex = item.photos.findIndex((photo) => photo.id === photoId);
+
+    if (photoIndex !== -1) {
+      openDetail(groupIndex, photoIndex);
+      return;
+    }
+  }
 }
 
 function setActiveCard() {
@@ -400,6 +432,7 @@ async function loadPhotos() {
 
     photos = await response.json();
     renderGallery();
+    openDetailFromHash();
   } catch (error) {
     console.error(error);
     emptyState.hidden = false;
@@ -410,5 +443,6 @@ async function loadPhotos() {
 previousGroupButton.addEventListener("click", () => showGroup(-1, previousGroupButton));
 nextGroupButton.addEventListener("click", () => showGroup(1, nextGroupButton));
 document.addEventListener("keydown", handleKeydown);
+window.addEventListener("hashchange", openDetailFromHash);
 
 loadPhotos();

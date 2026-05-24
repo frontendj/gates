@@ -17,7 +17,7 @@ If port `8000` is busy, the server will automatically try the next available por
 ## Edit Descriptions Locally
 
 When the site is opened from `pnpm serve` on `localhost`, each photo card shows a description editor.
-Edit the text and click Save to update `data/photos.json` directly. If a card represents a group, this edits the first photo in that group.
+Descriptions save on blur, Shift+Enter, or 3 seconds after you stop typing. If a card represents a group, this edits the first photo in that group.
 
 You can also edit the current photo description in the full-screen viewer. This is useful for grouped photos where each open/closed/detail state needs its own note.
 

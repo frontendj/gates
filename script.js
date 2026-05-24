@@ -10,6 +10,7 @@ const nextPhotoButton = document.querySelector("#next-photo");
 let photos = [];
 let lightboxPhotos = [];
 let currentIndex = 0;
+const descriptionSaveDelay = 3000;
 const canEditDescriptions = ["localhost", "127.0.0.1", "::1"].includes(
   location.hostname,
 );
@@ -128,32 +129,54 @@ function createDescriptionEditor(photo) {
   textarea.value = photo.description || "";
   textarea.rows = 3;
 
-  const actions = document.createElement("div");
-  actions.className = "description-editor__actions";
-
   const status = document.createElement("span");
   status.className = "description-editor__status";
   status.setAttribute("aria-live", "polite");
 
-  const saveButton = document.createElement("button");
-  saveButton.className = "description-editor__save";
-  saveButton.type = "submit";
-  saveButton.textContent = "Save";
+  let saveTimeout;
+  let lastSavedValue = textarea.value;
 
-  actions.append(status, saveButton);
   label.append(textarea);
-  form.append(label, actions);
+  form.append(label, status);
+
+  const queueSave = () => {
+    clearTimeout(saveTimeout);
+    status.textContent = "Unsaved changes";
+    saveTimeout = setTimeout(() => {
+      saveNow();
+    }, descriptionSaveDelay);
+  };
+
+  const saveNow = async () => {
+    clearTimeout(saveTimeout);
+
+    if (textarea.value === lastSavedValue) {
+      status.textContent = "";
+      return;
+    }
+
+    await saveDescription(photo, textarea.value, status);
+    lastSavedValue = photo.description || "";
+  };
+
+  textarea.addEventListener("input", queueSave);
+  textarea.addEventListener("blur", saveNow);
+  textarea.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" && event.shiftKey) {
+      event.preventDefault();
+      saveNow();
+    }
+  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    await saveDescription(photo, textarea.value, status, saveButton);
+    await saveNow();
   });
 
   return form;
 }
 
-async function saveDescription(photo, description, status, saveButton) {
-  saveButton.disabled = true;
+async function saveDescription(photo, description, status) {
   status.textContent = "Saving...";
 
   try {
@@ -180,8 +203,6 @@ async function saveDescription(photo, description, status, saveButton) {
   } catch (error) {
     console.error(error);
     status.textContent = "Could not save";
-  } finally {
-    saveButton.disabled = false;
   }
 }
 

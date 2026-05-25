@@ -1,19 +1,12 @@
 const gallery = document.querySelector("#gallery");
 const emptyState = document.querySelector("#empty-state");
-const detail = document.querySelector("#detail");
-const detailImageFrame = document.querySelector("#detail-image-frame");
-const detailImage = document.querySelector("#detail-image");
-const detailMiniGallery = document.querySelector("#detail-mini-gallery");
-const detailCopy = document.querySelector("#detail-copy");
-const previousGroupButton = document.querySelector("#previous-group");
-const nextGroupButton = document.querySelector("#next-group");
+const siteTitle = document.querySelector("#site-title");
 
 let photos = [];
 let galleryItems = [];
-let detailPhotos = [];
+let detailOpen = false;
 let currentGroupIndex = 0;
 let currentPhotoIndex = 0;
-const descriptionSaveDelay = 3000;
 const mode = new URLSearchParams(location.search).get("mode");
 const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(
   location.hostname,
@@ -32,12 +25,18 @@ function getPhotoAlt(photo) {
   return photo.description || photo.location || `Gate photo ${photo.id}`;
 }
 
-function getMetaText(photo) {
-  return [photo.groupRole, photo.location, photo.date].filter(Boolean).join(" - ");
-}
-
 function getLongText(photo) {
   return photo.explanation || photo.notes || photo.longDescription || "";
+}
+
+function formatDisplayDate(date) {
+  const match = String(date).match(/^(\d{4})-(\d{2})-(\d{2})/);
+
+  if (match) {
+    return `${match[3]}.${match[2]}.${match[1]}`;
+  }
+
+  return date;
 }
 
 function buildGalleryItems() {
@@ -71,6 +70,7 @@ function buildGalleryItems() {
 
 function renderGallery() {
   gallery.innerHTML = "";
+  renderSiteTitle();
   emptyState.hidden = photos.length > 0;
   galleryItems = buildGalleryItems();
 
@@ -80,8 +80,11 @@ function renderGallery() {
     card.className = "photo-card";
     card.dataset.groupIndex = String(groupIndex);
 
-    if (!detail.hidden && groupIndex === currentGroupIndex) {
-      card.classList.add("photo-card--active");
+    if (detailOpen && groupIndex === currentGroupIndex) {
+      card.classList.add("photo-card--expanded");
+      renderExpandedCard(card, item);
+      gallery.append(card);
+      return;
     }
 
     const imageButton = document.createElement("button");
@@ -106,76 +109,195 @@ function renderGallery() {
     card.append(imageButton);
     imageButton.addEventListener("click", () => openDetail(groupIndex));
     gallery.append(card);
-
-    if (!detail.hidden && groupIndex === currentGroupIndex) {
-      gallery.append(detail);
-    }
   });
 }
 
-function createDescriptionEditor(photo) {
-  const form = document.createElement("form");
-  form.className = "description-editor";
+function renderSiteTitle() {
+  siteTitle.textContent = "";
 
-  const label = document.createElement("label");
-  label.className = "description-editor__label";
-  label.textContent = `Description for photo ${photo.id}`;
+  if (!detailOpen) {
+    siteTitle.textContent = "Gates";
+    return;
+  }
 
-  const textarea = document.createElement("textarea");
-  textarea.className = "description-editor__textarea";
-  textarea.value = photo.description || "";
-  textarea.rows = 3;
-
-  const status = document.createElement("span");
-  status.className = "description-editor__status";
-  status.setAttribute("aria-live", "polite");
-
-  let saveTimeout;
-  let lastSavedValue = textarea.value;
-
-  label.append(textarea);
-  form.append(label, status);
-
-  const queueSave = () => {
-    clearTimeout(saveTimeout);
-    status.textContent = "Unsaved changes";
-    saveTimeout = setTimeout(() => {
-      saveNow();
-    }, descriptionSaveDelay);
-  };
-
-  const saveNow = async () => {
-    clearTimeout(saveTimeout);
-
-    if (textarea.value === lastSavedValue) {
-      status.textContent = "";
-      return;
-    }
-
-    await saveDescription(photo, textarea.value, status);
-    lastSavedValue = photo.description || "";
-  };
-
-  textarea.addEventListener("input", queueSave);
-  textarea.addEventListener("blur", saveNow);
-  textarea.addEventListener("keydown", (event) => {
-    if (event.key === "Enter" && event.shiftKey) {
-      event.preventDefault();
-      saveNow();
-    }
-  });
-
-  form.addEventListener("submit", async (event) => {
+  const link = document.createElement("a");
+  link.href = `${location.pathname}${location.search}`;
+  link.textContent = "Gates";
+  link.setAttribute("aria-label", "Return to all gates");
+  link.addEventListener("click", (event) => {
     event.preventDefault();
-    await saveNow();
+    closeDetail();
   });
 
-  return form;
+  siteTitle.append(link);
 }
 
-async function saveDescription(photo, description, status) {
-  status.textContent = "Saving...";
+function closeDetail() {
+  detailOpen = false;
+  currentPhotoIndex = 0;
+  history.pushState(null, "", `${location.pathname}${location.search}`);
+  renderGallery();
+  window.scrollTo({
+    top: 0,
+    left: 0,
+    behavior: "auto",
+  });
+}
 
+function renderExpandedCard(card, item) {
+  const groupPhotos = item.photos;
+
+  if (currentPhotoIndex >= groupPhotos.length) {
+    currentPhotoIndex = 0;
+  }
+
+  const photo = groupPhotos[currentPhotoIndex];
+  card.id = `photo-${photo.id}`;
+  card.setAttribute("aria-live", "polite");
+
+  const media = document.createElement("div");
+  media.className = "photo-card__media";
+
+  const imageFrame = document.createElement("div");
+  imageFrame.className = "photo-card__image-frame";
+
+  const image = document.createElement("img");
+  image.className = "photo-card__full-image";
+  image.alt = getPhotoAlt(photo);
+  reserveExpandedImageSpace(photo, imageFrame);
+  image.addEventListener("load", () =>
+    applyLoadedImageRatio(image, imageFrame),
+  );
+  image.src = getFullPath(photo);
+
+  imageFrame.append(image);
+  media.append(imageFrame);
+
+  const notes = document.createElement("aside");
+  notes.className = "photo-card__notes";
+  notes.append(createPhotoCardControls(), createPhotoCardCopy(item, photo));
+
+  card.append(media, notes);
+}
+
+function createPhotoCardControls() {
+  const controls = document.createElement("div");
+  controls.className = "photo-card__controls";
+
+  const previous = document.createElement("button");
+  previous.className = "photo-card__nav";
+  previous.type = "button";
+  previous.dataset.cardNav = "previous";
+  previous.textContent = "Previous";
+  previous.setAttribute("aria-label", "Previous gate");
+  previous.addEventListener("click", () => showGroup(-1, "previous"));
+
+  const next = document.createElement("button");
+  next.className = "photo-card__nav";
+  next.type = "button";
+  next.dataset.cardNav = "next";
+  next.textContent = "Next";
+  next.setAttribute("aria-label", "Next gate");
+  next.addEventListener("click", () => showGroup(1, "next"));
+
+  controls.append(previous, next);
+  return controls;
+}
+
+function createPhotoCardCopy(item, photo) {
+  const copy = document.createElement("div");
+
+  if (photo.date || photo.location) {
+    const meta = document.createElement("div");
+    meta.className = "photo-card__meta";
+
+    if (photo.date) {
+      const date = document.createElement("p");
+      date.className = "photo-card__meta-line";
+      const dateLabel = document.createElement("strong");
+      dateLabel.textContent = "date: ";
+      date.append(dateLabel, formatDisplayDate(photo.date));
+      meta.append(date);
+    }
+
+    if (photo.location) {
+      const location = document.createElement("p");
+      location.className = "photo-card__meta-line";
+      const locationLabel = document.createElement("strong");
+      locationLabel.textContent = "location: ";
+      location.append(locationLabel, photo.location);
+      meta.append(location);
+    }
+
+    copy.append(meta);
+  }
+
+  const description = createPhotoCardDescription(photo);
+  if (description) {
+    copy.append(description);
+  }
+
+  if (getLongText(photo)) {
+    const explanation = document.createElement("p");
+    explanation.className = "photo-card__explanation";
+    explanation.textContent = getLongText(photo);
+    copy.append(explanation);
+  }
+
+  if (item.photos.length > 1) {
+    const position = document.createElement("p");
+    position.className = "photo-card__position";
+    position.textContent = `${currentPhotoIndex + 1} of ${item.photos.length}`;
+
+    const sideGallery = document.createElement("div");
+    sideGallery.className = "photo-card__side-gallery";
+    sideGallery.append(position, createMiniGallery(item.photos));
+    copy.append(sideGallery);
+  }
+
+  return copy;
+}
+
+function createPhotoCardDescription(photo) {
+  if (canEditDescriptions) {
+    const textarea = document.createElement("textarea");
+    textarea.className = "photo-card__description";
+    textarea.value = photo.description || "";
+    textarea.rows = 3;
+
+    let lastSavedValue = textarea.value;
+
+    const saveNow = async () => {
+      if (textarea.value === lastSavedValue) {
+        return;
+      }
+
+      await saveDescription(photo, textarea.value);
+      lastSavedValue = photo.description || "";
+    };
+
+    textarea.addEventListener("blur", saveNow);
+    textarea.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && event.shiftKey) {
+        event.preventDefault();
+        saveNow();
+      }
+    });
+
+    return textarea;
+  }
+
+  if (!photo.description) {
+    return null;
+  }
+
+  const description = document.createElement("p");
+  description.className = "photo-card__description";
+  description.textContent = photo.description;
+  return description;
+}
+
+async function saveDescription(photo, description) {
   try {
     const response = await fetch(`api/photos/${photo.id}/description`, {
       method: "PUT",
@@ -191,132 +313,62 @@ async function saveDescription(photo, description, status) {
 
     const data = await response.json();
     photo.description = data.photo.description;
-    status.textContent = "Saved";
-    renderGallery();
-
-    if (!detail.hidden) {
-      updateDetail();
+    if (detailOpen) {
+      renderGallery();
     }
   } catch (error) {
     console.error(error);
-    status.textContent = "Could not save";
   }
 }
 
 function openDetail(groupIndex, photoIndex = 0) {
   currentGroupIndex = groupIndex;
   currentPhotoIndex = photoIndex;
-  detail.hidden = false;
-  updateDetail();
-  placeDetailAfterActiveCard();
+  detailOpen = true;
+  renderGallery();
   updateDetailHash();
   scrollDetailIntoView();
 }
 
 function showGroup(offset, focusAfterUpdate) {
-  currentGroupIndex = (currentGroupIndex + offset + galleryItems.length) % galleryItems.length;
+  currentGroupIndex =
+    (currentGroupIndex + offset + galleryItems.length) % galleryItems.length;
   currentPhotoIndex = 0;
-  updateDetail();
-  setActiveCard();
-  placeDetailAfterActiveCard();
+  renderGallery();
   updateDetailHash();
   scrollDetailIntoView();
 
   if (focusAfterUpdate) {
     requestAnimationFrame(() => {
-      focusAfterUpdate.focus();
+      gallery.querySelector(`[data-card-nav="${focusAfterUpdate}"]`)?.focus();
     });
   }
 }
 
 function showGroupPhoto(photoIndex) {
   currentPhotoIndex = photoIndex;
-  updateDetail();
+  renderGallery();
   updateDetailHash();
-}
-
-function updateDetail() {
-  const currentGroup = galleryItems[currentGroupIndex];
-
-  if (!currentGroup) {
-    detail.hidden = true;
-    return;
-  }
-
-  detailPhotos = currentGroup.photos;
-
-  if (currentPhotoIndex >= detailPhotos.length) {
-    currentPhotoIndex = 0;
-  }
-
-  const photo = detailPhotos[currentPhotoIndex];
-  reserveDetailImageSpace(photo);
-  detailImage.src = getFullPath(photo);
-  detailImage.alt = getPhotoAlt(photo);
-
-  const metaText = getMetaText(photo);
-  detailCopy.innerHTML = "";
-  detailMiniGallery.innerHTML = "";
-
-  const heading = document.createElement("p");
-  heading.className = "detail__eyebrow";
-  heading.textContent = currentGroup.photos.length > 1 ? "Linked gate study" : "Gate study";
-  detailCopy.append(heading);
-
-  if (metaText) {
-    const meta = document.createElement("p");
-    meta.className = "detail__meta";
-    meta.textContent = metaText;
-    detailCopy.append(meta);
-  }
-
-  if (photo.description) {
-    const description = document.createElement("p");
-    description.className = "detail__description";
-    description.textContent = photo.description;
-    detailCopy.append(description);
-  }
-
-  if (getLongText(photo)) {
-    const explanation = document.createElement("p");
-    explanation.className = "detail__explanation";
-    explanation.textContent = getLongText(photo);
-    detailCopy.append(explanation);
-  }
-
-  if (detailPhotos.length > 1) {
-    const position = document.createElement("p");
-    position.className = "detail__position";
-    position.textContent = `${currentPhotoIndex + 1} of ${detailPhotos.length}`;
-
-    const sideGallery = document.createElement("div");
-    sideGallery.className = "detail__side-gallery";
-    sideGallery.append(position);
-    sideGallery.append(createMiniGallery(detailPhotos));
-    detailCopy.append(sideGallery);
-  }
-
-  if (canEditDescriptions) {
-    detailCopy.append(createDescriptionEditor(photo));
-  }
-}
-
-function placeDetailAfterActiveCard() {
-  const activeCard = gallery.querySelector(`[data-group-index="${currentGroupIndex}"]`);
-
-  if (activeCard) {
-    activeCard.after(detail);
-  }
+  scrollDetailIntoView();
 }
 
 function scrollDetailIntoView() {
-  requestAnimationFrame(() => {
-    const top = detail.getBoundingClientRect().top + window.scrollY;
-    window.scrollTo({
-      top,
-      left: 0,
+  const scrollToExpandedCard = () => {
+    const expandedCard = gallery.querySelector(".photo-card--expanded");
+    if (!expandedCard) {
+      return;
+    }
+
+    expandedCard.scrollIntoView({
+      block: "start",
+      inline: "nearest",
       behavior: "auto",
     });
+  };
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(scrollToExpandedCard);
+    setTimeout(scrollToExpandedCard, 0);
   });
 }
 
@@ -353,15 +405,6 @@ function openDetailFromHash() {
   }
 }
 
-function setActiveCard() {
-  gallery.querySelectorAll(".photo-card--active").forEach((card) => {
-    card.classList.remove("photo-card--active");
-  });
-
-  const activeCard = gallery.querySelector(`[data-group-index="${currentGroupIndex}"]`);
-  activeCard?.classList.add("photo-card--active");
-}
-
 function createMiniGallery(groupPhotos) {
   const miniGallery = document.createElement("div");
   miniGallery.className = "mini-gallery";
@@ -370,8 +413,14 @@ function createMiniGallery(groupPhotos) {
     const button = document.createElement("button");
     button.className = "mini-gallery__photo";
     button.type = "button";
-    button.setAttribute("aria-label", `Show photo ${index + 1} of ${groupPhotos.length}`);
-    button.setAttribute("aria-current", index === currentPhotoIndex ? "true" : "false");
+    button.setAttribute(
+      "aria-label",
+      `Show photo ${index + 1} of ${groupPhotos.length}`,
+    );
+    button.setAttribute(
+      "aria-current",
+      index === currentPhotoIndex ? "true" : "false",
+    );
 
     const image = document.createElement("img");
     image.src = getPreviewPath(photo);
@@ -386,29 +435,32 @@ function createMiniGallery(groupPhotos) {
   return miniGallery;
 }
 
-function reserveDetailImageSpace(photo) {
-  const aspectRatio = Number(photo.aspectRatio || (photo.width && photo.height ? photo.width / photo.height : 0));
+function reserveExpandedImageSpace(photo, imageFrame) {
+  const aspectRatio = Number(
+    photo.aspectRatio ||
+      (photo.width && photo.height ? photo.width / photo.height : 0),
+  );
 
   if (Number.isFinite(aspectRatio) && aspectRatio > 0) {
-    detailImageFrame.style.aspectRatio = String(aspectRatio);
-    detailImageFrame.style.setProperty("--detail-aspect-ratio", aspectRatio);
+    imageFrame.style.aspectRatio = String(aspectRatio);
+    imageFrame.style.setProperty("--photo-card-aspect-ratio", aspectRatio);
     return;
   }
 
-  detailImageFrame.style.aspectRatio = "";
-  detailImageFrame.style.removeProperty("--detail-aspect-ratio");
+  imageFrame.style.aspectRatio = "";
+  imageFrame.style.removeProperty("--photo-card-aspect-ratio");
 }
 
-detailImage.addEventListener("load", () => {
-  if (detailImage.naturalWidth && detailImage.naturalHeight) {
-    const aspectRatio = detailImage.naturalWidth / detailImage.naturalHeight;
-    detailImageFrame.style.aspectRatio = `${detailImage.naturalWidth} / ${detailImage.naturalHeight}`;
-    detailImageFrame.style.setProperty("--detail-aspect-ratio", aspectRatio);
+function applyLoadedImageRatio(image, imageFrame) {
+  if (image.naturalWidth && image.naturalHeight) {
+    const aspectRatio = image.naturalWidth / image.naturalHeight;
+    imageFrame.style.aspectRatio = `${image.naturalWidth} / ${image.naturalHeight}`;
+    imageFrame.style.setProperty("--photo-card-aspect-ratio", aspectRatio);
   }
-});
+}
 
 function handleKeydown(event) {
-  if (detail.hidden) {
+  if (!detailOpen) {
     return;
   }
 
@@ -439,12 +491,11 @@ async function loadPhotos() {
   } catch (error) {
     console.error(error);
     emptyState.hidden = false;
-    emptyState.textContent = "Could not load photos. Serve this folder with a local static server and try again.";
+    emptyState.textContent =
+      "Could not load photos. Serve this folder with a local static server and try again.";
   }
 }
 
-previousGroupButton.addEventListener("click", () => showGroup(-1, previousGroupButton));
-nextGroupButton.addEventListener("click", () => showGroup(1, nextGroupButton));
 document.addEventListener("keydown", handleKeydown);
 window.addEventListener("hashchange", openDetailFromHash);
 
